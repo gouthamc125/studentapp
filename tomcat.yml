@@ -1,0 +1,6 @@
+---
+- hosts: app
+  remote_user: goutham
+  become: yes
+  roles:
+    - role: tomcat

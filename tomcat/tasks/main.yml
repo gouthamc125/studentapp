@@ -1,0 +1,91 @@
+---
+- name: Install Java
+  shell: "amazon-linux-extras install java-openjdk11 -y"
+  notify: Restart Tomcat
+  become: yes
+
+- name: Install Maven build Tool
+  package:
+    name: maven
+    state: present
+
+- name: Check a tomcat directory exists or not
+  stat:
+    path: /opt/apache-tomcat-9.0.71/
+  register: tomcat_dir_check
+
+- name: Check the tomcat home directory
+  debug: var=tomcat_dir_check
+
+- name: Download Tomcat
+  unarchive:
+    src: "{{TOMCAT_URL}}"
+    dest: "/opt/"
+    remote_src: yes
+  notify: Restart Tomcat
+
+- name: Set the goutham user owner and group
+  file:
+    path: /opt/apache-tomcaat-9.0.71/
+    state: directory
+    owner: goutham
+    group: goutham
+    recurse: yes
+
+- name: Clone a github repository
+  git:
+    repo: https://gitlab.com/rns-app/student-app.git
+    dest: /home/goutham/studentapp/
+    clone: yes
+    update: yes
+
+- name: Dowwnload JDBC Jar file
+  copy:
+    src: "files/tomcat/lib/mysql-connector.jar"
+    dest: "/opt/apache-tomcat-9.0.71/lib"
+  notify: Restart Tomcat
+
+- name: Update Tomcat Context config with database details
+  template:
+    src: context.xml.j2
+    dest: "/opt/apache-tomcat-9.0.71/conf/context.xml"
+  notify: Restart Tomcat
+
+- name: Update Tomcat users file
+  copy:
+    src: "files/tomcat/conf/tomcat-users.xml"
+    dest: "/opt/apache-tomcat-9.0.71/conf/"
+  notify: Restart Tomcat
+
+- name: Update manager context file
+  copy:
+    src: "files/tomcat/manager/context.xml"
+    dest: "/opt/apache-tomcat-9.0.71/webapps/manager/META-INF/"
+  notify: Restart Tomcat
+
+- name: Download Tomcat Init script
+  copy:
+    src: "files/tomcat-init"
+    dest: /etc/systemd/system/tomcat.service
+    mode: u=rwx,g=rx,o=rx
+  become: yes
+
+- name: Reload systemctl service
+  systemd:
+    daemon_reload: yes
+
+- name: copy the build script
+  copy: 
+    src: "files/scripts/build.sh"
+    dest: /home/goutham/
+    mode: u=rwx,g=rx,o=rx
+
+- name: Build it and Deploy the Application
+  shell: "sed -i -e 's/\r$//' /home/goutham/build.sh && /home/goutham/build.sh"
+  become: yes
+
+- name: Start Tomcat Service
+  service:
+    name: tomcat
+    state: started
+  become: yes
