@@ -1,4 +1,0 @@
-[Webserver]
-web ansible_host=172.31.32.219
-[appserver]
-app ansible_host=172.31.45.39
