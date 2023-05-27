@@ -1,0 +1,82 @@
+--- #Download tomcat and run it
+- hosts: web
+  become: yes
+  vars:
+    download_url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.75/bin/apache-tomcat-9.0.75.tar.gz
+  tasks:
+    - name: Download the Jdk
+      shell: "amazon-linux-extras install java-openjdk11 -y"
+
+    - name: validate Java
+      shell: 
+        java --version
+
+    - name: create a tomcat directory
+      file:
+        path: /opt/tomcat
+        state: directory
+        mode: 0755
+        owner: goutham
+        group: goutham
+
+    - name: Download the tomcat using unarchive
+      unarchive:
+        src: "{{download_url}}"
+        dest: /opt/tomcat
+        mode: 0755
+        owner: goutham
+        group: goutham
+        remote_src: yes
+
+    - name: Move files to the /opt/tomcat directory
+      shell: "mv /opt/tomcat/apache*/* /opt/tomcat"
+
+    - name: Creating a serivce file
+      copy:
+        content: |-
+          # Systemd unit file for tomcat
+          [Unit]
+          Description=Tomcat Service
+          Requires=network.target
+          After=network.target
+          
+          #After=syslog.target network.target
+          
+          [Service]
+          Type=forking
+          Environment=JAVA_HOME=/usr/lib/jvm/jre-11-openjdk-11.0.18.0.10-1.amzn2.0.1.x86_64/
+          Environment=CATALINA_PID=/opt/tomcat/temp/tomcat.pid
+          Environment=CATALINA_HOME=/opt/tomcat/
+          Environment=CATALINA_BASE=/opt/tomcat/
+          Environment="CATALINA_OPTS=-Xms512M -Xmx512M -server -XX:+UseParallelGC"
+          Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
+          ExecStart=/opt/tomcat/bin/startup.sh
+          ExecStop=/opt/tomcat/bin/shutdown.sh
+          # ExecStop=/bin/kill -15 $MAINPID
+          User=goutham
+          Group=goutham
+          [Install]
+          WantedBy=multi-user.target 
+        dest: /etc/systemd/system/tomcat.service
+
+    - name: Reload the SystemD to re-read configurations
+      become: yes
+      systemd:
+          daemon-reload: yes
+    - name: Enable the tomcat service and start
+      become: yes
+      systemd:
+          name: tomcat
+          enabled: yes
+          state: started
+    - name: Connect to Tomcat server on port 8080 and check status 200 - Try 5 times
+      tags: test
+      uri:
+        url: http://localhost:8080
+      register: result
+      until: "result.status == 200"
+      retries: 5
+      delay: 10
+
+
+

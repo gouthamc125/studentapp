@@ -1,0 +1,13 @@
+--- #Creating a directory in target node
+- name: Creating a directory
+  hosts: web
+  become_user: goutham
+  become: true
+  tasks:
+    - name: Create a empty directory
+      file:
+        path: /home/goutham/student
+        state: directory
+        mode: 755
+        owner: goutham
+        group: goutham
