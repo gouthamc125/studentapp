@@ -1,0 +1,19 @@
+--- #Installing the http package
+- name: Installing the http package
+  hosts: web
+  become: true
+  tasks:
+    - name: Installing the httpd package
+      yum:
+        name: "httpd"
+        state: present
+
+    - name: Starting the service
+      service:
+        name: "httpd"
+        state: started
+        enabled: true
+    - name: Install git 
+      yum:
+        name: git
+        state: present

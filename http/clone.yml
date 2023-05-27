@@ -1,0 +1,13 @@
+--- #Cloning the git repo to target
+- hosts: web
+  become_user: goutham
+  become: true
+  tasks:
+  - name: Clone a repo to target
+    git:
+      repo: https://gitlab.com/rns-app/static-project.git
+      dest: /home/goutham/student
+      clone: yes
+      update: yes
+
+

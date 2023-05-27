@@ -1,0 +1,12 @@
+--- #Restart the httpd service
+- name: Restart the httpd service
+  hosts: web
+  become_user: goutham
+  become: true
+  handlers:
+  - name: Restart the httpd service
+    service:
+      name: "httpd"
+      state: restarted
+      enabled: true
+    register: restarted

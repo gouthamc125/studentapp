@@ -1,0 +1,11 @@
+--- #Copying the static and delete the default web page
+- name: Copying the static web page and delete default page
+  hosts: web
+  become_user: goutham
+  become: true
+  tasks:
+    - name: Delete the default web page
+      shell: "sudo rm -rf /var/www/html/*"
+
+    - name: Copy the static page to html
+      shell: "sudo cp -R /home/goutham/student/iPortfolio/* /var/www/html/"

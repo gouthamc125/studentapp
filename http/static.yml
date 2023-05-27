@@ -1,0 +1,6 @@
+---
+- import_playbook: http.yml
+- import_playbook: clone.yml
+- import_playbook: copy.yml
+- import_playbook: restart.yml
+
