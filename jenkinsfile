@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+    
+    tools {
+        maven "maven3"
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', changelog: false, poll: false, url: 'https://github.com/gouthamc125/studentapp.git'
+            }
+        }
+        
+        stage('Compile') {
+            steps {
+                sh "mvn compile"
+            }
+        }
+        
+        stage('Unit Test cases') {
+            steps {
+                sh "mvn test -DskipTests=true"
+            }
+        }
+        
+        stage('Build the Code') {
+            steps {
+                sh "mvn package -DskipTests=true"
+            }
+        }
+        
+        stage('Database Update with sql file') {
+            steps {
+                sh "sudo mysql -uroot < /var/lib/jenkins/workspace/student_app/dbscript/studentapp.sql"
+            }
+        }
+        
+        stage('Update the Tomcat config files') {
+            steps {
+                sh "sudo cp /var/lib/jenkins/workspace/student_app/tomcat/conf/context.xml /opt/tomcat/conf/"
+                sh "sudo cp /var/lib/jenkins/workspace/student_app/tomcat/conf/*.xml /opt/tomcat/conf/"
+                sh "sudo cp /var/lib/jenkins/workspace/student_app/tomcat/lib/*.jar /opt/tomcat/lib/"
+                sh "sudo cp /var/lib/jenkins/workspace/student_app/tomcat/manager/context.xml /opt/tomcat/webapps/manager/META-INF/"
+            }
+        }
+        
+        stage('Application Deployment') {
+            steps {
+                sh "sudo cp /var/lib/jenkins/workspace/student_app/target/*.war /opt/tomcat/webapps/student.war"
+            }
+        }
+        
+    }
+}
